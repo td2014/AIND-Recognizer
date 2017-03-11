@@ -148,6 +148,8 @@ class SelectorCV(ModelSelector):
             # initialize the avg log likelihood for the current number of hidden nodes
             avgLL = 0.0 # this is an accumulator, so okay to set to zero
             validSplit = 0 # Keep track of number of splits that can be trained & scored.
+            maxLocalLL = float('-inf') # best log likelihood for this number of hidden nodes
+            bestLocalModel = None  # store the best model of the group for this number of hidden nodes.
             for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
 ###                print("SelectorCV: Train fold indices:{} Test fold indices:{}".format(cv_train_idx, cv_test_idx))  # view indices of the folds
         
@@ -189,6 +191,10 @@ class SelectorCV(ModelSelector):
                     # Want to score on the hold-out samples
                     logL = model.score(X_holdout, lengths_holdout)
                     validSplit = validSplit+1 # Valid split found (trained & scored)
+                    # Keep track of the best model within this hidden node group.
+                    if logL > maxLocalLL:
+                        maxLocalLL = logL
+                        bestLocalModel = model
                 except: #If there are any issues with training or scoring, set log likelihood to zero
 ###                    print("SelectorCV: Issue with models.  Setting LL accumulator to 0.")
                     logL = 0
@@ -208,7 +214,7 @@ class SelectorCV(ModelSelector):
             if avgLL > maxLL:
 ###                print("SelectorCV: Updating best model.")
                 maxLL=avgLL
-                bestModel = model  # choose the last model in group (arbitrarily)
+                bestModel = bestLocalModel  # choose the best model in group so far (arbitrarily)
                 best_num_components=iHidden
 ###                print ("SelectorCV: maxLL = ", maxLL)
 ###                print ("SelectorCV: best_num_components = ", best_num_components)
