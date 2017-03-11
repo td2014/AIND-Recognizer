@@ -117,7 +117,7 @@ class SelectorCV(ModelSelector):
         #
         # Let's be aggressive on run-time warnings, such as those issued from the modeling section below.
         warnings.filterwarnings("error", category=RuntimeWarning) # Raise an exception.
-        print()
+###        print()
         print("-----")
         print("SelectorCV: self.this_word: ", self.this_word)
 ###        print("SelectorCV: X:")
@@ -131,6 +131,9 @@ class SelectorCV(ModelSelector):
         
         # The number of splits cannot be greater than number of samples and also must be >=2 (per KFold doc)
         # If len(self.length) is < 3, then let 2 be selected automatically, otherwise set to 3 splits.
+        if len(self.lengths) < 2:
+            print("SelectorCV: Returning fallback model.  Need at least two word samples to train/test model.")
+            return None  # self.base_model(self.n_constant)
         minSplit = min(len(self.lengths),3)
 ###        print("SelectorCV: minSplit = ", minSplit)
         split_method = KFold(n_splits=minSplit)
@@ -141,7 +144,7 @@ class SelectorCV(ModelSelector):
         bestModel = None
                     
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-            print("SelectorCV: iHidden = ", iHidden)
+###            print("SelectorCV: iHidden = ", iHidden)
             # initialize the avg log likelihood for the current number of hidden nodes
             avgLL = 0.0 # this is an accumulator, so okay to set to zero
             validSplit = 0 # Keep track of number of splits that can be trained & scored.
@@ -187,34 +190,34 @@ class SelectorCV(ModelSelector):
                     logL = model.score(X_holdout, lengths_holdout)
                     validSplit = validSplit+1 # Valid split found (trained & scored)
                 except: #If there are any issues with training or scoring, set log likelihood to zero
-                    print("SelectorCV: Issue with models.  Setting LL accumulator to 0.")
+###                    print("SelectorCV: Issue with models.  Setting LL accumulator to 0.")
                     logL = 0
-                print("SelectorCV: (holdout) logL = {}".format(logL))
+###                print("SelectorCV: (holdout) logL = {}".format(logL))
                 avgLL = avgLL + logL
 
             # Compute average log likelihood over the number of valid k-fold splits.
             if validSplit > 0:
-                print("SelectorCV: Valid model found with splits = ", validSplit)
+###                print("SelectorCV: Valid model found with splits = ", validSplit)
                 avgLL = avgLL/(1.0*validSplit)
             else:
-                print("SelectorCV: Skipping model.")
+###                print("SelectorCV: Skipping model.")
                 avgLL = float('-inf') # skip this model entirely
 ###            print("SelectorCV: avgLL = ", avgLL)
             
             # Save this model parameters if it has the highest avgLL so far
             if avgLL > maxLL:
-                print("SelectorCV: Updating best model.")
+###                print("SelectorCV: Updating best model.")
                 maxLL=avgLL
-                bestModel = model
+                bestModel = model  # choose the last model in group (arbitrarily)
                 best_num_components=iHidden
-                print ("SelectorCV: maxLL = ", maxLL)
-                print ("SelectorCV: best_num_components = ", best_num_components)
-                print ("SelectorCV: bestModel = ", model)
+###                print ("SelectorCV: maxLL = ", maxLL)
+###                print ("SelectorCV: best_num_components = ", best_num_components)
+###                print ("SelectorCV: bestModel = ", model)
             
-            print()
+###            print()
         
         if bestModel == None:  # Return a default case if there was a problem
-            print("SelectorCV: Returning default fallback model.")
+            print("SelectorCV: Returning default fallback model - None.")
             return None
         else:
             # This is the final model in the best group.
