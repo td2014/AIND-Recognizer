@@ -118,8 +118,8 @@ class SelectorCV(ModelSelector):
         # Let's be aggressive on run-time warnings, such as those issued from the modeling section below.
         warnings.filterwarnings("error", category=RuntimeWarning) # Raise an exception.
 ###        print()
-        print("-----")
-        print("SelectorCV: self.this_word: ", self.this_word)
+###        print("-----")
+###        print("SelectorCV: self.this_word: ", self.this_word)
 ###        print("SelectorCV: X:")
 ###        print(self.X)
 ###        print("SelectorCV: self.lengths:")
@@ -132,7 +132,7 @@ class SelectorCV(ModelSelector):
         # The number of splits cannot be greater than number of samples and also must be >=2 (per KFold doc)
         # If len(self.length) is < 3, then let 2 be selected automatically, otherwise set to 3 splits.
         if len(self.lengths) < 2:
-            print("SelectorCV: Returning fallback model.  Need at least two word samples to train/test model.")
+###            print("SelectorCV: Returning fallback model.  Need at least two word samples to train/test model.")
             return None  # self.base_model(self.n_constant)
         minSplit = min(len(self.lengths),3)
 ###        print("SelectorCV: minSplit = ", minSplit)
@@ -187,14 +187,17 @@ class SelectorCV(ModelSelector):
                 # Train on extracted  subset of sequences for k-fold
                 # Error trap for bad training or scoring cases.
                 try:
-                    model = GaussianHMM(n_components=iHidden, n_iter=1000).fit(X_train, lengths_train)
+                    model = GaussianHMM(n_components=iHidden, covariance_type="diag", 
+                                        random_state=self.random_state, n_iter=1000).fit(X_train, lengths_train)
                     # Want to score on the hold-out samples
                     logL = model.score(X_holdout, lengths_holdout)
                     validSplit = validSplit+1 # Valid split found (trained & scored)
+###                    print("SelectorCV: Valid (holdout) logL = {}".format(logL))
                     # Keep track of the best model within this hidden node group.
                     if logL > maxLocalLL:
                         maxLocalLL = logL
                         bestLocalModel = model
+###                        print("SelectorCV: Best Log Likelihood - retaining model: ", maxLocalLL)
                 except: #If there are any issues with training or scoring, set log likelihood to zero
 ###                    print("SelectorCV: Issue with models.  Setting LL accumulator to 0.")
                     logL = 0
@@ -207,7 +210,7 @@ class SelectorCV(ModelSelector):
                 avgLL = avgLL/(1.0*validSplit)
             else:
 ###                print("SelectorCV: Skipping model.")
-                avgLL = float('-inf') # skip this model entirely
+                avgLL = float('-inf') # skip this model entirely (won't pass next if statement for updating model)
 ###            print("SelectorCV: avgLL = ", avgLL)
             
             # Save this model parameters if it has the highest avgLL so far
@@ -223,14 +226,14 @@ class SelectorCV(ModelSelector):
 ###            print()
         
         if bestModel == None:  # Return a default case if there was a problem
-            print("SelectorCV: Returning default fallback model - None.")
+###            print("SelectorCV: Returning default fallback model - None.")
             return None
         else:
             # This is the final model in the best group.
             # Could have picked another one (best fit in that group)
             # but this is probably adaquate, as long as it came from the 
             # best group of fits
-            print("SelectorCV: Returning a best fit model.")
+###            print("SelectorCV: Returning a best fit model.")
             return bestModel
 
 
