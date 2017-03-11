@@ -92,17 +92,20 @@ class SelectorBIC(ModelSelector):
         bestModel = None
         numDataPoints = len(self.X)
         
-        print("------")
-        print("SelectorBIC: curWord = ", self.this_word)
-        print("SelectorBIC: numDataPoints = ", numDataPoints)
-        print("SelectorBIC: X:")
-        print(self.X)
-        print("SelectorBIC: lengths")
-        print(self.lengths)
+###        print("------")
+###        print("SelectorBIC: curWord = ", self.this_word)
+###        print("SelectorBIC: numDataPoints = ", numDataPoints)
+###        print("SelectorBIC: X:")
+###        print(self.X)
+###        print("SelectorBIC: lengths")
+###        print(self.lengths)
+        n_features = len(self.X[0])
+###        print("SelectorBIC: num_features = ", n_features)
         
         # Loop over range of hidden nodes.           
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-            print("SelectorBIC: iHidden = ", iHidden)
+###            print()
+###            print("SelectorBIC: iHidden = ", iHidden)
         
             # Error trap for bad training or scoring cases.
             try:
@@ -111,8 +114,22 @@ class SelectorBIC(ModelSelector):
                     
                 logL = model.score(self.X, self.lengths)
             
-                numParams = 1
-                curBIC = -2.0 * logL + numParams * math.log10(numDataPoints)
+                # Per the code writeup for hmmlearn.hmm, the number of parameters = sum of
+                # (- note that n_components = number of hidden states)
+                # 
+                # size of transition matrix = n_components * n_components
+                # size of start prob = n_components
+                # size of means = n_components * n_features
+                # size of covariance (for diag) = n_components * n_features
+                #
+                #
+            
+                numParams = iHidden*iHidden + iHidden + iHidden * n_features + iHidden * n_features
+                curBIC = -2.0 * logL + numParams * math.log(numDataPoints)
+                
+###                print("SelectorBIC: numParams = ", numParams)
+###                print("SelectorBIC: logL = ", logL)
+###                print("SelectorBIC: curBIC = ", curBIC)
                 
             except: #If there are any issues with training or scoring, set BIC to inf so below test doesn't pass
                 curBIC = float('inf')
@@ -121,6 +138,7 @@ class SelectorBIC(ModelSelector):
             if curBIC < minBIC:
                 minBIC=curBIC
                 bestModel = model  # choose the best model in group so far
+###                print("SelectorBIC: updating model to lower BIC = ", minBIC)
 
         if bestModel == None:  # Return a default case if there was a problem
             return None
