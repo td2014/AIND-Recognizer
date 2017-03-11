@@ -115,6 +115,8 @@ class SelectorCV(ModelSelector):
         # model = SelectorCV(sequences, Xlengths, word, 
         #            min_n_components=2, max_n_components=15, random_state = 14).select()
         #
+        # Let's be aggressive on run-time warnings, such as those issued from the modeling section below.
+        warnings.filterwarnings("error", category=RuntimeWarning) # Raise an exception.
         print()
         print("-----")
         print("SelectorCV: self.this_word: ", self.this_word)
@@ -137,12 +139,12 @@ class SelectorCV(ModelSelector):
         maxLL = float('-inf')
         # Initialize the bestModel to return
         bestModel = None
-        best_num_components=3 #default size in case we don't find better model (due to errors etc.)
                     
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-###            print("SelectorCV: iHidden = ", iHidden)
+            print("SelectorCV: iHidden = ", iHidden)
             # initialize the avg log likelihood for the current number of hidden nodes
-            avgLL = 0.0
+            avgLL = 0.0 # this is an accumulator, so okay to set to zero
+            validSplit = 0 # Keep track of number of splits that can be trained & scored.
             for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
 ###                print("SelectorCV: Train fold indices:{} Test fold indices:{}".format(cv_train_idx, cv_test_idx))  # view indices of the folds
         
@@ -178,15 +180,25 @@ class SelectorCV(ModelSelector):
 ###                print(lengths_holdout)
                   
                 # Train on extracted  subset of sequences for k-fold
-                model = GaussianHMM(n_components=iHidden, n_iter=1000).fit(X_train, lengths_train)
-              
-                # Want to score on the hold-out samples
-                logL = model.score(X_holdout, lengths_holdout)
-###                print("SelectorCV: (holdout) logL = {}".format(logL))
+                # Error trap for bad training or scoring cases.
+                try:
+                    model = GaussianHMM(n_components=iHidden, n_iter=1000).fit(X_train, lengths_train)
+                    # Want to score on the hold-out samples
+                    logL = model.score(X_holdout, lengths_holdout)
+                    validSplit = validSplit+1 # Valid split found (trained & scored)
+                except: #If there are any issues with training or scoring, set log likelihood to zero
+                    print("SelectorCV: Issue with models.  Setting LL accumulator to 0.")
+                    logL = 0
+                print("SelectorCV: (holdout) logL = {}".format(logL))
                 avgLL = avgLL + logL
 
-            # Compute average log likelihood over the number of k-fold splits. (either 2 or 3)
-            avgLL = avgLL/(1.0*minSplit)
+            # Compute average log likelihood over the number of valid k-fold splits.
+            if validSplit > 0:
+                print("SelectorCV: Valid model found with splits = ", validSplit)
+                avgLL = avgLL/(1.0*validSplit)
+            else:
+                print("SelectorCV: Skipping model.")
+                avgLL = float('-inf') # skip this model entirely
 ###            print("SelectorCV: avgLL = ", avgLL)
             
             # Save this model parameters if it has the highest avgLL so far
@@ -202,7 +214,8 @@ class SelectorCV(ModelSelector):
             print()
         
         if bestModel == None:  # Return a default case if there was a problem
-            return self.base_model(best_num_components)
+            print("SelectorCV: Returning default fallback model.")
+            return None
         else:
             # This is the final model in the best group.
             # Could have picked another one (best fit in that group)
