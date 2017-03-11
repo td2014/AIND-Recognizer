@@ -118,19 +118,19 @@ class SelectorCV(ModelSelector):
         print()
         print("-----")
         print("SelectorCV: self.this_word: ", self.this_word)
-        print("SelectorCV: X:")
-        print(self.X)
-        print("SelectorCV: self.lengths:")
-        print(self.lengths)
-        print("SelectorCV: length of self.lengths = ", len(self.lengths))
-        print("SelectorCV: self.min_n_components = ", self.min_n_components)
-        print("SelectorCV: self.max_n_components = ", self.max_n_components)
-        print()
+###        print("SelectorCV: X:")
+###        print(self.X)
+###        print("SelectorCV: self.lengths:")
+###        print(self.lengths)
+###        print("SelectorCV: length of self.lengths = ", len(self.lengths))
+###        print("SelectorCV: self.min_n_components = ", self.min_n_components)
+###        print("SelectorCV: self.max_n_components = ", self.max_n_components)
+###        print()
         
         # The number of splits cannot be greater than number of samples and also must be >=2 (per KFold doc)
         # If len(self.length) is < 3, then let 2 be selected automatically, otherwise set to 3 splits.
         minSplit = min(len(self.lengths),3)
-        print("SelectorCV: minSplit = ", minSplit)
+###        print("SelectorCV: minSplit = ", minSplit)
         split_method = KFold(n_splits=minSplit)
         
         #initialize max log likelihood over search space
@@ -140,7 +140,7 @@ class SelectorCV(ModelSelector):
         best_num_components=3 #default size in case we don't find better model (due to errors etc.)
                     
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-            print("SelectorCV: iHidden = ", iHidden)
+###            print("SelectorCV: iHidden = ", iHidden)
             # initialize the avg log likelihood for the current number of hidden nodes
             avgLL = 0.0
             for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
@@ -162,8 +162,7 @@ class SelectorCV(ModelSelector):
 ###                print("SelectorCV: lengths_train:")
 ###                print(lengths_train)
                 
-                # Now do similar setup for the holdout(test)/ cross-validation sequences.
-                
+                # Now do similar setup for the holdout(test)/ cross-validation sequences.               
                 X_holdout_cat = []
                 lengths_holdout = []
                 
@@ -183,12 +182,12 @@ class SelectorCV(ModelSelector):
               
                 # Want to score on the hold-out samples
                 logL = model.score(X_holdout, lengths_holdout)
-                print("SelectorCV: (holdout) logL = {}".format(logL))
+###                print("SelectorCV: (holdout) logL = {}".format(logL))
                 avgLL = avgLL + logL
 
             # Compute average log likelihood over the number of k-fold splits. (either 2 or 3)
             avgLL = avgLL/(1.0*minSplit)
-            print("SelectorCV: avgLL = ", avgLL)
+###            print("SelectorCV: avgLL = ", avgLL)
             
             # Save this model parameters if it has the highest avgLL so far
             if avgLL > maxLL:
