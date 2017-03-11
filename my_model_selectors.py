@@ -76,8 +76,57 @@ class SelectorBIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on BIC scores
-        return None
-#        raise NotImplementedError
+ 
+        #
+        # Need to loop over range of possible numbers of hidden states (outer loop)
+        # and BIC computations.  Return model with lowest BIC.  This code 
+        # is adapted from my implementation of the SelectorCV since some of the 
+        # code logic is similar.
+        #
+        # Let's be aggressive on run-time warnings, such as those issued from the modeling section below.
+        warnings.filterwarnings("error", category=RuntimeWarning) # Raise an exception.
+        
+        #initialize global BIC over search space
+        minBIC = float('inf')
+        # Initialize the bestModel to return
+        bestModel = None
+        numDataPoints = len(self.X)
+        
+        print("------")
+        print("SelectorBIC: curWord = ", self.this_word)
+        print("SelectorBIC: numDataPoints = ", numDataPoints)
+        print("SelectorBIC: X:")
+        print(self.X)
+        print("SelectorBIC: lengths")
+        print(self.lengths)
+        
+        # Loop over range of hidden nodes.           
+        for iHidden in range(self.min_n_components, self.max_n_components+1):
+            print("SelectorBIC: iHidden = ", iHidden)
+        
+            # Error trap for bad training or scoring cases.
+            try:
+                model = GaussianHMM(n_components=iHidden, covariance_type="diag", 
+                                    random_state=self.random_state, n_iter=1000).fit(self.X, self.lengths)
+                    
+                logL = model.score(self.X, self.lengths)
+            
+                numParams = 1
+                curBIC = -2.0 * logL + numParams * math.log10(numDataPoints)
+                
+            except: #If there are any issues with training or scoring, set BIC to inf so below test doesn't pass
+                curBIC = float('inf')
+                    
+            # Save this model parameters if it has the highest avgLL so far
+            if curBIC < minBIC:
+                minBIC=curBIC
+                bestModel = model  # choose the best model in group so far
+
+        if bestModel == None:  # Return a default case if there was a problem
+            return None
+        else:
+            # This is the final model with the lowest BIC.
+            return bestModel
 
 
 class SelectorDIC(ModelSelector):
@@ -191,10 +240,7 @@ class SelectorCV(ModelSelector):
         if bestModel == None:  # Return a default case if there was a problem
             return None
         else:
-            # This is the final model in the best group.
-            # Could have picked another one (best fit in that group)
-            # but this is probably adaquate, as long as it came from the 
-            # best group of fits
+            # This is the best model in the best group.
             return bestModel
 
 
