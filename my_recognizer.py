@@ -26,16 +26,16 @@ def recognize(models: dict, test_set: SinglesData):
     
     # Loop over each word and then run all the models on that word, retaining
     # the log likelihood values for that word/model combination
-#    print("recognize 5.")
     
     # get the feature sequences and lengths for each test word
     iTestWord = test_set.get_all_Xlengths()
     
-    # initialize best guess word variable
-    bestGuessWord = None
     # Loop over each word, and the each model to find max likelihood model-word.
     for iWordIdx, iWordTuple in iTestWord.items():
+        # initialize best guess word variable
+        bestGuessWord = None
         maxLL = float('-inf')
+        testWordDict = dict()  # Keep track of the probabilities for each model per test word
         testSequence = np.array(iWordTuple[0]) #hmm friendly format
         testLen = np.array(iWordTuple[1]) # hmm friendly format
 #        print("recognize: testSequence = ", testSequence)
@@ -48,7 +48,11 @@ def recognize(models: dict, test_set: SinglesData):
 #                print("recognize: logL = {}".format(logL))
             except:
                 logL = float('-inf')  # set to default value for a failed model.
+             
+            # Store current model word results in dictionary    
+            testWordDict[iModelWord] = logL    
             # retain highest likelihood word
+            
             if logL > maxLL:
                 maxLL=logL
                 bestGuessWord = iModelWord
@@ -56,6 +60,10 @@ def recognize(models: dict, test_set: SinglesData):
 
         # update guesses list with highest likelihood word
         guesses.append(bestGuessWord)
+        probabilities.append(testWordDict)
+        
+###        print("recognize:  bestGuessWord = ", bestGuessWord)
+###        print("recognize:  testWordDict = ", testWordDict)
+###        print("----")
         
     return probabilities, guesses
-#    raise NotImplementedError
