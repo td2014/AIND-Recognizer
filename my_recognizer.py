@@ -38,14 +38,11 @@ def recognize(models: dict, test_set: SinglesData):
         testWordDict = dict()  # Keep track of the probabilities for each model per test word
         testSequence = np.array(iWordTuple[0]) #hmm friendly format
         testLen = np.array(iWordTuple[1]) # hmm friendly format
-#        print("recognize: testSequence = ", testSequence)
-#        print("recognize: testLen = ", testLen)
         # Loop over each model and retain highest likelihood word
         for iModelWord, iModel in models.items():
             # Error trap for models that don't work for some reason.
             try:
                 logL = iModel.score(testSequence, testLen)
-#                print("recognize: logL = {}".format(logL))
             except:
                 logL = float('-inf')  # set to default value for a failed model.
              
@@ -61,9 +58,5 @@ def recognize(models: dict, test_set: SinglesData):
         # update guesses list with highest likelihood word
         guesses.append(bestGuessWord)
         probabilities.append(testWordDict)
-        
-###        print("recognize:  bestGuessWord = ", bestGuessWord)
-###        print("recognize:  testWordDict = ", testWordDict)
-###        print("----")
-        
+            
     return probabilities, guesses
