@@ -91,21 +91,10 @@ class SelectorBIC(ModelSelector):
         # Initialize the bestModel to return
         bestModel = None
         numDataPoints = len(self.X)
-        
-###        print("------")
-###        print("SelectorBIC: curWord = ", self.this_word)
-###        print("SelectorBIC: numDataPoints = ", numDataPoints)
-###        print("SelectorBIC: X:")
-###        print(self.X)
-###        print("SelectorBIC: lengths")
-###        print(self.lengths)
         n_features = len(self.X[0])
-###        print("SelectorBIC: num_features = ", n_features)
         
         # Loop over range of hidden nodes.           
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-###            print()
-###            print("SelectorBIC: iHidden = ", iHidden)
         
             # Error trap for bad training or scoring cases.
             try:
@@ -126,11 +115,7 @@ class SelectorBIC(ModelSelector):
             
                 numParams = iHidden*iHidden + iHidden + iHidden * n_features + iHidden * n_features
                 curBIC = -2.0 * logL + numParams * math.log(numDataPoints)
-                
-###                print("SelectorBIC: numParams = ", numParams)
-###                print("SelectorBIC: logL = ", logL)
-###                print("SelectorBIC: curBIC = ", curBIC)
-                
+                               
             except: #If there are any issues with training or scoring, set BIC to inf so below test doesn't pass
                 curBIC = float('inf')
                     
@@ -138,7 +123,6 @@ class SelectorBIC(ModelSelector):
             if curBIC < minBIC:
                 minBIC=curBIC
                 bestModel = model  # choose the best model in group so far
-###                print("SelectorBIC: updating model to lower BIC = ", minBIC)
 
         if bestModel == None:  # Return a default case if there was a problem
             return None
@@ -179,19 +163,8 @@ class SelectorDIC(ModelSelector):
         # Initialize the bestModel to return
         bestModel = None
         
-###        print("------")
-###        print("SelectorDIC: curWord = ", self.this_word)
-###        print("SelectorDIC: X:")
-###        print(self.X)
-###        print("SelectorDIC: lengths")
-###        print(self.lengths)
-##        print("SelectorDIC: hwords")
-##        print(self.hwords)
-        
         # Loop over range of hidden nodes.           
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-###            print()
-###            print("SelectorDIC: iHidden = ", iHidden)
         
             # Error trap for bad training or scoring cases.
             try:
@@ -210,17 +183,11 @@ class SelectorDIC(ModelSelector):
             accumLogL = 0.0 # log likelihood accumulator for DIC computation.
             modelCount = 0  # Keep track of number of valid model scores.
             for iWord, iTuple in self.hwords.items():
-###                print("SelectorDIC: iWord", iWord)
                 # Extract the data and lengths for the words
                 X_DIC = np.array(iTuple[0])
                 lengths_DIC = iTuple[1]
-###                print("SelectorDIC: X_DIC:")
-###                print(X_DIC)
-###                print("SelectorDIC: lengths_DIC:")
-###                print(lengths_DIC)
                 
                 if iWord == self.this_word:
-###                    print("SelectorDIC: skipping this word.")
                     continue # skip this word since it is the one we are testing
                 else:
                     try:
@@ -231,13 +198,11 @@ class SelectorDIC(ModelSelector):
                         continue
             
             curDIC = logL_test - (1.0/(1.0-1.0*modelCount))*accumLogL
-###            print("SelectorDIC: curDIC, logL_test, modelCount, accumLogL = ", curDIC, logL_test, modelCount, accumLogL)
             
             # Save this model parameters if it has the greatest DIC so far
             if curDIC > maxDIC:
                 maxDIC=curDIC
                 bestModel = model  # choose the best model in group so far
-###                print("SelectorDIC: updating model to higher DIC = ", maxDIC)
 
         if bestModel == None:  # Return a default case if there was a problem
             return None

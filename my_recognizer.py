@@ -53,7 +53,6 @@ def recognize(models: dict, test_set: SinglesData):
             if logL > maxLL:
                 maxLL=logL
                 bestGuessWord = iModelWord
-#                print("recognize: bestGuessWord = ", bestGuessWord)
 
         # update guesses list with highest likelihood word
         guesses.append(bestGuessWord)
