@@ -134,7 +134,7 @@ class SelectorBIC(ModelSelector):
             except: #If there are any issues with training or scoring, set BIC to inf so below test doesn't pass
                 curBIC = float('inf')
                     
-            # Save this model parameters if it has the highest avgLL so far
+            # Save this model parameters if it has the lowest BIC so far
             if curBIC < minBIC:
                 minBIC=curBIC
                 bestModel = model  # choose the best model in group so far
@@ -160,8 +160,77 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        return None
-#        raise NotImplementedError
+        #
+        #
+        # For calculating the DIC, we need to loop over the range of hidden nodes,
+        # and for each number of hidden nodes, we need to compute the
+        # log likelihood of the test word given the current model
+        # as well as the log likelihoods of all other words given the current model
+        # and compute the DIC.
+        #
+        # I'll reuse the basic code logic for BIC that I implemented above
+        # since some of the processing steps are similar.
+        #
+        # Let's be aggressive on run-time warnings, such as those issued from the modeling section below.
+        warnings.filterwarnings("error", category=RuntimeWarning) # Raise an exception.
+        
+        #initialize global DIC over search space
+        maxDIC = float('-inf')
+        # Initialize the bestModel to return
+        bestModel = None
+        
+###        print("------")
+###        print("SelectorDIC: curWord = ", self.this_word)
+###        print("SelectorDIC: X:")
+###        print(self.X)
+###        print("SelectorDIC: lengths")
+###        print(self.lengths)
+        
+        # Loop over range of hidden nodes.           
+        for iHidden in range(self.min_n_components, self.max_n_components+1):
+###            print()
+###            print("SelectorDIC: iHidden = ", iHidden)
+        
+            # Error trap for bad training or scoring cases.
+            try:
+                model = GaussianHMM(n_components=iHidden, covariance_type="diag", 
+                                    random_state=self.random_state, n_iter=1000).fit(self.X, self.lengths)
+                    
+                logL_test = model.score(self.X, self.lengths)
+            
+            except: #If there are any issues with training or scoring
+                continue # skip to next iHidden
+                    
+            #
+            # Now loop over all other words given the current model and compute the rest of the DIC
+            #
+            
+            accumLogL = 0.0
+            modelCount = 0  # Keep track of number of valid model scores.
+            for iWord in self.X:
+                if iWord == self.this_word:
+                    continue # skip this word since it is the one we are testing
+                else:
+                    try:
+                        logL = model.score(self.X, self.lengths)
+                        modelCount = modelCount+1
+                        accumLogL = accumLogL + logL
+                    except: # skip this word if we cannot score it
+                        pass
+            
+            curDIC = logL_test - (1.0/(1.0-1.0*modelCount))*accumLogL
+                
+            # Save this model parameters if it has the greatest DIC so far
+            if curDIC > maxDIC:
+                maxDIC=curDIC
+                bestModel = model  # choose the best model in group so far
+###                print("SelectorDIC: updating model to higher DIC = ", maxDIC)
+
+        if bestModel == None:  # Return a default case if there was a problem
+            return None
+        else:
+            # This is the final model with the highest DIC.
+            return bestModel
 
 
 class SelectorCV(ModelSelector):
