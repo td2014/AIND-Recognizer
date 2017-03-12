@@ -179,8 +179,8 @@ class SelectorDIC(ModelSelector):
         # Initialize the bestModel to return
         bestModel = None
         
-        print("------")
-        print("SelectorDIC: curWord = ", self.this_word)
+###        print("------")
+###        print("SelectorDIC: curWord = ", self.this_word)
 ###        print("SelectorDIC: X:")
 ###        print(self.X)
 ###        print("SelectorDIC: lengths")
@@ -190,8 +190,8 @@ class SelectorDIC(ModelSelector):
         
         # Loop over range of hidden nodes.           
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-            print()
-            print("SelectorDIC: iHidden = ", iHidden)
+###            print()
+###            print("SelectorDIC: iHidden = ", iHidden)
         
             # Error trap for bad training or scoring cases.
             try:
@@ -231,13 +231,13 @@ class SelectorDIC(ModelSelector):
                         continue
             
             curDIC = logL_test - (1.0/(1.0-1.0*modelCount))*accumLogL
-            print("SelectorDIC: curDIC, logL_test, modelCount, accumLogL = ", curDIC, logL_test, modelCount, accumLogL)
+###            print("SelectorDIC: curDIC, logL_test, modelCount, accumLogL = ", curDIC, logL_test, modelCount, accumLogL)
             
             # Save this model parameters if it has the greatest DIC so far
             if curDIC > maxDIC:
                 maxDIC=curDIC
                 bestModel = model  # choose the best model in group so far
-                print("SelectorDIC: updating model to higher DIC = ", maxDIC)
+###                print("SelectorDIC: updating model to higher DIC = ", maxDIC)
 
         if bestModel == None:  # Return a default case if there was a problem
             return None
