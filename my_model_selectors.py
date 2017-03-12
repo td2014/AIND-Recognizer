@@ -179,17 +179,19 @@ class SelectorDIC(ModelSelector):
         # Initialize the bestModel to return
         bestModel = None
         
-###        print("------")
-###        print("SelectorDIC: curWord = ", self.this_word)
+        print("------")
+        print("SelectorDIC: curWord = ", self.this_word)
 ###        print("SelectorDIC: X:")
 ###        print(self.X)
 ###        print("SelectorDIC: lengths")
 ###        print(self.lengths)
+##        print("SelectorDIC: hwords")
+##        print(self.hwords)
         
         # Loop over range of hidden nodes.           
         for iHidden in range(self.min_n_components, self.max_n_components+1):
-###            print()
-###            print("SelectorDIC: iHidden = ", iHidden)
+            print()
+            print("SelectorDIC: iHidden = ", iHidden)
         
             # Error trap for bad training or scoring cases.
             try:
@@ -205,26 +207,37 @@ class SelectorDIC(ModelSelector):
             # Now loop over all other words given the current model and compute the rest of the DIC
             #
             
-            accumLogL = 0.0
+            accumLogL = 0.0 # log likelihood accumulator for DIC computation.
             modelCount = 0  # Keep track of number of valid model scores.
-            for iWord in self.X:
+            for iWord, iTuple in self.hwords.items():
+###                print("SelectorDIC: iWord", iWord)
+                # Extract the data and lengths for the words
+                X_DIC = np.array(iTuple[0])
+                lengths_DIC = iTuple[1]
+###                print("SelectorDIC: X_DIC:")
+###                print(X_DIC)
+###                print("SelectorDIC: lengths_DIC:")
+###                print(lengths_DIC)
+                
                 if iWord == self.this_word:
+###                    print("SelectorDIC: skipping this word.")
                     continue # skip this word since it is the one we are testing
                 else:
                     try:
-                        logL = model.score(self.X, self.lengths)
+                        logL = model.score(X_DIC, lengths_DIC)
                         modelCount = modelCount+1
                         accumLogL = accumLogL + logL
                     except: # skip this word if we cannot score it
-                        pass
+                        continue
             
             curDIC = logL_test - (1.0/(1.0-1.0*modelCount))*accumLogL
-                
+            print("SelectorDIC: curDIC, logL_test, modelCount, accumLogL = ", curDIC, logL_test, modelCount, accumLogL)
+            
             # Save this model parameters if it has the greatest DIC so far
             if curDIC > maxDIC:
                 maxDIC=curDIC
                 bestModel = model  # choose the best model in group so far
-###                print("SelectorDIC: updating model to higher DIC = ", maxDIC)
+                print("SelectorDIC: updating model to higher DIC = ", maxDIC)
 
         if bestModel == None:  # Return a default case if there was a problem
             return None
