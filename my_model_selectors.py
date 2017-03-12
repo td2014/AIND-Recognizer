@@ -111,11 +111,20 @@ class SelectorBIC(ModelSelector):
                 # size of means = n_components * n_features
                 # size of covariance (for diag) = n_components * n_features
                 #
+                # In order to take into account that not all these parameters are
+                # free, we can apply the constraints (taken from the _baseHMM code)
+                # that the sum of start probs must equal one, which means
+                # that only n_components-1 are "free."  Additionally
+                # the rows of the transition matrix must sum to one, so
+                # this reduces the number of free parameters in that term (n_components-1)
+                # These free parameter adjustments are included in the numParams calc below:
+                #
+                # Note: iHidden = n_components below:
                 #
             
-                numParams = iHidden*iHidden + iHidden + iHidden * n_features + iHidden * n_features
+                numParams = (iHidden-1)*iHidden + (iHidden-1) + iHidden * n_features + iHidden * n_features
                 curBIC = -2.0 * logL + numParams * math.log(numDataPoints)
-                               
+                
             except: #If there are any issues with training or scoring, set BIC to inf so below test doesn't pass
                 curBIC = float('inf')
                     
